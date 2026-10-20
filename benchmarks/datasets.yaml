@@ -1,0 +1,3 @@
+# Real-data benchmark registry (empty by design until sources are verified).
+# Each entry needs: name, source_url, licence, target, group_col/time_col (with justification).
+datasets: []
