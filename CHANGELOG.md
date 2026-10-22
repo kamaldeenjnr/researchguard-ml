@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.2 — 2026-10-22
+## 0.1.2 (2026-10-22)
 
 ### Fixed (both found by running on real hospital data)
 - Columns with pandas nullable types (`Int64`, `boolean`, `string` with `pd.NA`) crashed the
@@ -19,9 +19,9 @@
 - First real-data benchmark: Diabetes 130-US hospitals (UCI 296, CC BY 4.0), grouped by
   patient (`benchmarks/real/diabetes130.py`, registered in `benchmarks/datasets.yaml`).
   Result: about 20% of patients were shared across random-CV splits, but optimism was at most
-  +0.005 AUC — the structure was detected and its effect correctly reported as negligible.
+  +0.005 AUC. The structure was detected and its effect correctly reported as negligible.
 
-## 0.1.1 — 2026-10-22
+## 0.1.1 (2026-10-22)
 
 ### Fixed
 - **Forward-in-time validation could split a single time point across train and test.**
@@ -47,7 +47,7 @@
 - A declared group/time column is no longer flagged as a possible identifier in the audit.
 - Fold checks in the Markdown report are written as a sentence rather than a raw dictionary.
 
-## 0.1.0 — 2026-10-19
+## 0.1.0 (2026-10-19)
 - Initial release: data audit, design-aware validation selection and verification,
   leakage-safe baselines, calibration and subgroup reliability, optimism estimate,
   JSON/Markdown reports, synthetic benchmark.

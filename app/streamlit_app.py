@@ -8,7 +8,7 @@ from researchguard.reporting import build_report, to_markdown
 
 st.set_page_config(page_title="ResearchGuard ML", layout="wide")
 st.title("ResearchGuard ML")
-st.caption("Auditable evaluation for binary-outcome tabular data. Predictive association only — "
+st.caption("Auditable evaluation for binary-outcome tabular data. Predictive association only, "
            "not causal inference, not clinical validation. Do not upload identifiable patient data.")
 
 file = st.file_uploader("CSV file", type="csv")

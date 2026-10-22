@@ -21,7 +21,7 @@ RES = HERE.parents[1] / "benchmarks" / "results"
 plt.rcParams.update({
     "font.size": 10, "axes.spines.top": False, "axes.spines.right": False,
     "axes.linewidth": 0.8, "xtick.major.width": 0.8, "ytick.major.width": 0.8,
-    "svg.fonttype": "path", "figure.facecolor": "white", "axes.facecolor": "white",
+    "svg.fonttype": "path", "axes.unicode_minus": False, "figure.facecolor": "white", "axes.facecolor": "white",
 })
 MODELS = [("logistic_regression", "Logistic regression", "o", "#2a78d6"),
           ("random_forest", "Random forest", "s", "#eb6834"),

@@ -45,13 +45,13 @@ def main():
                  optimism_mean=("optimism", "mean"), optimism_sd=("optimism", "std"),
                  optimism_min=("optimism", "min"), optimism_max=("optimism", "max")).round(3)
     lines = [f"# Synthetic benchmark ({args.seeds} seeds per scenario)", "",
-             "optimism = random-CV AUC − design-aware-CV AUC. Data are synthetic and built to "
+             "optimism = random-CV AUC - design-aware-CV AUC. Data are synthetic and built to "
              "contain (or lack) a known hazard; results show the mechanism, not real-world "
              "prevalence.", "",
              f"Environment: Python {platform.python_version()}, scikit-learn {sklearn.__version__}, "
              f"pandas {pd.__version__}, numpy {np.__version__}. Logistic regression and random "
              "forest results are identical across recent scikit-learn versions; gradient boosting "
-             "(HistGradientBoostingClassifier) can differ by about 0.01–0.03 AUC between versions.",
+             "(HistGradientBoostingClassifier) can differ by about 0.01 to 0.03 AUC between versions.",
              "", summ.reset_index().to_markdown(index=False), ""]
     (out / "summary.md").write_text("\n".join(lines), encoding="utf-8")
     print("\n".join(lines))

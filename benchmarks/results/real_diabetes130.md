@@ -2,7 +2,7 @@
 
 99,343 encounters from 69,990 patients after excluding death/hospice discharges; 16,341 patients have more than one encounter (45,694 encounters). Outcome: readmitted within 30 days (11,314 positive, 11.4%).
 
-5 seeds × 5 folds. optimism = random-CV AUC − patient-grouped-CV AUC.
+5 seeds × 5 folds. optimism = random-CV AUC - patient-grouped-CV AUC.
 
 | model               |   random_cv_auc |   patient_grouped_auc |   optimism_mean |   optimism_sd |   optimism_min |   optimism_max |
 |:--------------------|----------------:|----------------------:|----------------:|--------------:|---------------:|---------------:|

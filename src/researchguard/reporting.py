@@ -117,7 +117,7 @@ def to_markdown(r: dict) -> str:
     L += [f"- {x}" for x in v["reasons"]]
     L += [_warning_line(w) for w in v["warnings"]]
     k = v["checks"]
-    L += ["", f"Fold checks: **{'passed' if k['passed'] else 'FAILED'}** across {k['n_folds']} folds — "
+    L += ["", f"Fold checks: **{'passed' if k['passed'] else 'FAILED'}** across {k['n_folds']} folds. "
           f"groups shared between train and test: {k['group_overlap']}; "
           f"time-order violations: {k['time_order_violations']}; "
           f"test rows duplicated in train: {k['test_rows_duplicated_in_train']}; "
@@ -140,7 +140,7 @@ def to_markdown(r: dict) -> str:
         L += ["", "## Conventional vs design-aware validation", "", c["reason"]]
     for n, m in e["models"].items():
         for col, s in m["subgroups"].items():
-            L += ["", f"## Subgroups — {n} by `{col}` (AUC gap among reliable groups: "
+            L += ["", f"## Subgroups: {n} by `{col}` (AUC gap among reliable groups: "
                       f"{_f(s['auc_gap'])})", "", "| Level | n | Prevalence | AUC | Reliable |",
                   "|---|---|---|---|---|"]
             L += [f"| {x['level']} | {x['n']} | {_f(x['prevalence'])} | {_f(x['roc_auc'])} | "

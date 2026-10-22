@@ -12,7 +12,7 @@ Strategy: `stratified_group_kfold`
 
 - Rows share 'group_id', so whole groups are held out together.
 
-Fold checks: **passed** across 5 folds — groups shared between train and test: 0; time-order violations: 0; test rows duplicated in train: 0; folds missing a class: 0.
+Fold checks: **passed** across 5 folds. groups shared between train and test: 0; time-order violations: 0; test rows duplicated in train: 0; folds missing a class: 0.
 
 ## Model performance (mean ± sd over folds)
 
@@ -32,7 +32,7 @@ Under ordinary random CV, 60 of 60 groups had rows in both a training and a test
 | random_forest | 0.727 | 0.624 | 0.103 |
 | gradient_boosting | 0.713 | 0.619 | 0.093 |
 
-## Subgroups — logistic_regression by `x` (AUC gap among reliable groups: 0.071)
+## Subgroups: logistic_regression by `x` (AUC gap among reliable groups: 0.071)
 
 | Level | n | Prevalence | AUC | Reliable |
 |---|---|---|---|---|
@@ -41,7 +41,7 @@ Under ordinary random CV, 60 of 60 groups had rows in both a training and a test
 | (-0.0502, 0.676] | 150 | 0.627 | 0.570 | True |
 | (0.676, 3.066] | 150 | 0.653 | 0.572 | True |
 
-## Subgroups — random_forest by `x` (AUC gap among reliable groups: 0.131)
+## Subgroups: random_forest by `x` (AUC gap among reliable groups: 0.131)
 
 | Level | n | Prevalence | AUC | Reliable |
 |---|---|---|---|---|
@@ -50,7 +50,7 @@ Under ordinary random CV, 60 of 60 groups had rows in both a training and a test
 | (-0.0502, 0.676] | 150 | 0.627 | 0.489 | True |
 | (0.676, 3.066] | 150 | 0.653 | 0.603 | True |
 
-## Subgroups — gradient_boosting by `x` (AUC gap among reliable groups: 0.130)
+## Subgroups: gradient_boosting by `x` (AUC gap among reliable groups: 0.130)
 
 | Level | n | Prevalence | AUC | Reliable |
 |---|---|---|---|---|

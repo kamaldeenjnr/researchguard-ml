@@ -81,7 +81,7 @@ def main():
         f"discharges; {int((visits > 1).sum()):,} patients have more than one encounter "
         f"({int(visits[visits > 1].sum()):,} encounters). Outcome: readmitted within 30 days "
         f"({n_pos:,} positive, {n_pos / len(df):.1%}).", "",
-        f"{args.seeds} seeds × 5 folds. optimism = random-CV AUC − patient-grouped-CV AUC.", "",
+        f"{args.seeds} seeds × 5 folds. optimism = random-CV AUC - patient-grouped-CV AUC.", "",
         s.reset_index().to_markdown(index=False), "",
         f"Audit warnings: {', '.join(w['code'] for w in audit['warnings']) or 'none'}.", "",
         f"Environment: Python {platform.python_version()}, scikit-learn {sklearn.__version__}, "

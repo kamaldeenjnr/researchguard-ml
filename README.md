@@ -5,10 +5,10 @@
 [![license](https://img.shields.io/badge/license-MIT-0C203B)](LICENSE)
 ![status](https://img.shields.io/badge/status-v0.1.2%20alpha-C4412B)
 
-ResearchGuard checks whether a model was tested in a way that matches how the data were
-collected, and estimates how much a mismatch changes the reported score.
+ResearchGuard checks whether a prediction model was tested fairly for the way its data were
+collected, and tells you how much an unfair test changed the score.
 
-## In plain words
+## The problem
 
 Think of a prediction model as a student and testing as an exam. If the exam reuses questions
 the student already practised, a high score does not show the student can handle new questions.
@@ -19,10 +19,32 @@ exam). Some of a patient's visits can land in practice and another in the exam, 
 partly tested on someone it has already seen. Its score can then look better than it would be
 for new patients.
 
+The same thing happens with several children from one household, several patients from one
+clinic, or records from one month used to predict that same month. It is one of the most common
+reasons a model that looked strong in a study disappoints when it is used on new people, and it
+is easy to miss because the code runs without any error.
+
 ResearchGuard keeps all of a patient's visits on the same side, either all in practice or all
 in the exam, checks that every split really does this, and reports the score both ways. If the
 two scores are close, the shortcut did no harm. If they differ, the difference shows how much
 the usual method overstated the result.
+
+## Who it helps, and how
+
+- **Students writing a thesis with clinic, hospital or survey data.** One command replaces
+  writing and checking grouped cross-validation by hand, and the report states exactly how the
+  model was tested, which is what examiners ask about.
+- **Researchers preparing a paper.** The report records the split design, the fold checks, the
+  random seed, a fingerprint of the data and the software versions, so the methods section and a
+  reviewer's "how did you validate this?" are answered with evidence rather than a description.
+- **Public health, M&E and NGO data teams.** Before a risk score is used to target households,
+  clinics or districts, the team can see whether its accuracy holds for places and people it has
+  not seen, and avoid acting on an inflated number.
+- **Anyone reviewing someone else's model.** Run the same data through ResearchGuard and compare
+  the two scores. A large gap is a concrete, checkable reason to question a result.
+
+It also catches everyday data problems on the way: missing values, columns that never change,
+columns that look like ID numbers, and single columns that predict the outcome suspiciously well.
 
 | Term | Meaning |
 |---|---|
@@ -116,9 +138,9 @@ encounter. The outcome is readmission within 30 days. Over 5 seeds of 5-fold CV:
 
 | Model | Random-CV AUC | Patient-grouped AUC | Optimism, mean (range) |
 |---|---|---|---|
-| Logistic regression | 0.656 | 0.655 | 0.000 (−0.001 to 0.003) |
-| Random forest | 0.659 | 0.657 | 0.003 (−0.001 to 0.005) |
-| Gradient boosting | 0.672 | 0.672 | 0.000 (−0.002 to 0.001) |
+| Logistic regression | 0.656 | 0.655 | 0.000 (-0.001 to 0.003) |
+| Random forest | 0.659 | 0.657 | 0.003 (-0.001 to 0.005) |
+| Gradient boosting | 0.672 | 0.672 | 0.000 (-0.002 to 0.001) |
 
 Random CV put about 20% of patients on both sides of the split in every seed, but the scores
 hardly moved. With these features and models, repeat patients did not make the task easier.
@@ -134,9 +156,9 @@ also turned up three bugs, listed in the [changelog](CHANGELOG.md).
 | Scenario | Random forest | Gradient boosting | Logistic regression |
 |---|---|---|---|
 | Grouped, patients recognisable from their features | +0.18 | +0.17 | +0.03 |
-| Grouped, no hazard (control) | −0.00 | +0.00 | +0.00 |
+| Grouped, no hazard (control) | -0.00 | +0.00 | +0.00 |
 | Relationship drifts over time | +0.12 | +0.13 | +0.07 |
-| Stable over time (control) | +0.01 | −0.00 | +0.00 |
+| Stable over time (control) | +0.01 | -0.00 | +0.00 |
 
 These datasets were built to contain the problem, so they show the mechanism and that the
 controls stay near zero. They say nothing about how common the problem is. Forests and boosting

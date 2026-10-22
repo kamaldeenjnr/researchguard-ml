@@ -1,8 +1,8 @@
 # Synthetic benchmark (10 seeds per scenario)
 
-optimism = random-CV AUC − design-aware-CV AUC. Data are synthetic and built to contain (or lack) a known hazard; results show the mechanism, not real-world prevalence.
+optimism = random-CV AUC - design-aware-CV AUC. Data are synthetic and built to contain (or lack) a known hazard; results show the mechanism, not real-world prevalence.
 
-Environment: Python 3.11.15, scikit-learn 1.9.1, pandas 3.0.6, numpy 2.4.6. Logistic regression and random forest results are identical across recent scikit-learn versions; gradient boosting (HistGradientBoostingClassifier) can differ by about 0.01–0.03 AUC between versions.
+Environment: Python 3.11.15, scikit-learn 1.9.1, pandas 3.0.6, numpy 2.4.6. Logistic regression and random forest results are identical across recent scikit-learn versions; gradient boosting (HistGradientBoostingClassifier) can differ by about 0.01 to 0.03 AUC between versions.
 
 | scenario         | model               |   naive_auc |   design_auc |   optimism_mean |   optimism_sd |   optimism_min |   optimism_max |
 |:-----------------|:--------------------|------------:|-------------:|----------------:|--------------:|---------------:|---------------:|

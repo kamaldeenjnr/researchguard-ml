@@ -27,7 +27,7 @@ real-data benchmarks that have not yet been done.
    training folds only.
 5. **Reliability**: ROC AUC, PR AUC, Brier, log-loss, expected calibration error (10 uniform bins),
    per-subgroup metrics. Subgroups under 30 rows or lacking both classes are excluded from the AUC gap.
-6. **Optimism**: AUC(random stratified CV) − AUC(design-aware CV), same models, same seed,
+6. **Optimism**: AUC(random stratified CV) - AUC(design-aware CV), same models, same seed,
    same features.
 
 ## Design decisions
@@ -44,7 +44,7 @@ real-data benchmarks that have not yet been done.
 - Kapoor, S., & Narayanan, A. (2023). Leakage and the reproducibility crisis in
   machine-learning-based science. *Patterns*. https://doi.org/10.1016/j.patter.2023.100804
 - Roberts, D. R., et al. (2017). Cross-validation strategies for data with temporal, spatial,
-  hierarchical, or phylogenetic structure. *Ecography*, 40, 913–929.
+  hierarchical, or phylogenetic structure. *Ecography*, 40, 913-929.
   https://doi.org/10.1111/ecog.02881
 - Saeb, S., et al. (2017). The need to approximate the use-case in clinical machine learning.
   *GigaScience*, 6(5). https://doi.org/10.1093/gigascience/gix019

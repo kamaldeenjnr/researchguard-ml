@@ -1,6 +1,6 @@
 {
   "researchguard_version": "0.1.2",
-  "created_utc": "2026-10-22T17:25:07+00:00",
+  "created_utc": "2026-10-22T17:28:20+00:00",
   "environment": {
     "python": "3.11.15",
     "scikit_learn": "1.9.1",
