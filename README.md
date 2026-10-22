@@ -16,6 +16,11 @@ question: *is that evaluation design appropriate for how the data were collected
 patient, hospital or time period appears on both sides of a split, the score measures recall,
 not generalisation.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/split-dark.svg">
+  <img src="docs/img/split-light.svg" width="100%" alt="Random split versus patient-grouped split: in a random split, visits from 5 of 8 patients land in both training and test data; in a grouped split each patient is on one side only.">
+</picture>
+
 > **Status: v0.1, early research software.** Binary classification on tabular data only.
 > Predictive association only: not causal inference, not clinical validation.
 
@@ -78,6 +83,13 @@ Web app: `pip install -e ".[app]" && streamlit run app/streamlit_app.py`
 (do not upload identifiable patient data).
 
 ## Evidence so far
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/optimism-dark.svg">
+  <img src="docs/img/optimism-light.svg" width="100%" alt="Optimism of random cross-validation by scenario and model: up to +0.18 AUC on synthetic data with recognisable patients, about +0.13 with changing patterns, near zero on controls and on 99,343 real hospital visits.">
+</picture>
+
+<sub>Figures are generated from the committed results by <a href="docs/img/make_figures.py"><code>docs/img/make_figures.py</code></a>.</sub>
 
 ### Real data: 99,343 hospital encounters (Diabetes 130-US hospitals)
 
