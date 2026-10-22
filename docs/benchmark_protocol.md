@@ -4,7 +4,11 @@
 Four scenarios (two hazards, two controls) × three models × N seeds. Reports mean/SD/range
 of optimism. Controls estimate the false-alarm side.
 
-## Required before any methodological claim: real data
+## Completed: real data
+- Diabetes 130-US hospitals (UCI 296), grouped by patient, 5 seeds:
+  [`results/real_diabetes130.md`](../benchmarks/results/real_diabetes130.md).
+
+## Still required before broader methodological claims
 1. Select public datasets with documented grouping or time structure (OpenML tasks, licensed
    public-health surveys). Record licence and source in `benchmarks/datasets.yaml`.
 2. Pre-register metrics: optimism per model, fold-SD, runtime, false-alarm rate on datasets

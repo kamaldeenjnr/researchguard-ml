@@ -77,7 +77,25 @@ print(to_markdown(report))
 Web app: `pip install -e ".[app]" && streamlit run app/streamlit_app.py`
 (do not upload identifiable patient data).
 
-## Evidence so far (synthetic benchmark, 10 seeds)
+## Evidence so far
+
+### Real data: 99,343 hospital encounters (Diabetes 130-US hospitals)
+
+30-day readmission, grouped by patient; 16,341 patients have repeat encounters. 5 seeds × 5 folds
+([full results](benchmarks/results/real_diabetes130.md), [script](benchmarks/real/diabetes130.py)).
+
+| Model | Random-CV AUC | Patient-grouped AUC | Optimism (mean, range) |
+|---|---|---|---|
+| Logistic regression | 0.656 | 0.655 | +0.000 (−0.001 to +0.003) |
+| Random forest | 0.659 | 0.657 | +0.003 (−0.001 to +0.005) |
+| Gradient boosting | 0.672 | 0.672 | −0.000 (−0.002 to +0.001) |
+
+Random CV placed about 20% of patients on both sides of every split, yet scores barely changed.
+**ResearchGuard flagged the structure without exaggerating its effect:** here, shared patients
+did not inflate performance. Running it on real data also exposed three bugs, all fixed (see the
+[changelog](CHANGELOG.md)).
+
+### Synthetic benchmark (10 seeds)
 
 `optimism = AUC under random CV − AUC under design-aware CV`. Mean over 10 seeds
 (full table, SD and ranges: [`benchmarks/results/summary.md`](benchmarks/results/summary.md)).
@@ -93,8 +111,8 @@ Web app: `pip install -e ".[app]" && streamlit run app/streamlit_app.py`
 - The datasets are *constructed* to contain the hazard. This shows the mechanism and that the
   controls do not false-alarm. It does **not** show how common the problem is in real research data.
 - Flexible models (forests, boosting) exploit the hazard far more than logistic regression.
-- Real-data benchmarks (e.g. OpenML datasets with known grouping) are the next required step
-  and are not done yet. See [`docs/benchmark_protocol.md`](docs/benchmark_protocol.md).
+- One real-data benchmark is done (above); more datasets, including temporal ones, are needed.
+  See [`docs/benchmark_protocol.md`](docs/benchmark_protocol.md).
 
 Reproduce: `python benchmarks/run_benchmarks.py --seeds 10`.
 

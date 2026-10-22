@@ -9,9 +9,14 @@
   and `HistGradientBoostingClassifier` rejected it. Gradient boosting now uses a dense ordinal
   encoding; logistic regression and random forest keep one-hot encoding.
 
+- Columns named like identifiers (`*_id`) but with few distinct values (e.g. `admission_type_id`,
+  8 codes) are no longer flagged as identifiers; a name match now also needs more than 30 levels.
+
 ### Added
 - First real-data benchmark: Diabetes 130-US hospitals (UCI 296, CC BY 4.0), grouped by
   patient (`benchmarks/real/diabetes130.py`, registered in `benchmarks/datasets.yaml`).
+  Result: about 20% of patients were shared across random-CV splits, but optimism was at most
+  +0.005 AUC — the structure was detected and its effect correctly reported as negligible.
 
 ## 0.1.1 — 2026-10-22
 

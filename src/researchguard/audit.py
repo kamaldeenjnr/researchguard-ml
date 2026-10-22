@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.metrics import roc_auc_score
 
 ID_NAME = re.compile(r"(^id$|_id$|^id_|uuid|identifier)", re.I)
+MIN_ID_LEVELS = 30
 
 
 def _warn(code: str, severity: str, details: dict, needs_confirmation: bool = False) -> dict:
@@ -52,7 +53,9 @@ def audit_dataset(df: pd.DataFrame, target: str | None = None,
     id_like = [
         str(c) for c in df.columns
         if c != target and c not in (declared_columns or []) and (
-            ID_NAME.search(str(c))
+            # An "_id" name alone is not enough: short code lists such as
+            # admission_type_id (8 levels) are categories, not identifiers.
+            (ID_NAME.search(str(c)) and df[c].nunique() > MIN_ID_LEVELS)
             or (df[c].nunique() == len(df) and not pd.api.types.is_float_dtype(df[c]))
         )
     ]

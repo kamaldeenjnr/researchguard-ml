@@ -65,3 +65,9 @@ def test_declared_group_column_not_flagged_as_identifier():
     declared = audit_dataset(df, target="y", declared_columns=["patient_id"])
     assert "IDENTIFIER_COLUMNS" in [w["code"] for w in flagged["warnings"]]
     assert "IDENTIFIER_COLUMNS" not in [w["code"] for w in declared["warnings"]]
+
+
+def test_short_code_lists_named_id_are_not_identifiers():
+    """admission_type_id-style codes (few levels) are categories, not row identifiers."""
+    df = _clean().assign(admission_type_id=np.arange(400) % 8)
+    assert "IDENTIFIER_COLUMNS" not in [w["code"] for w in audit_dataset(df, "y")["warnings"]]
