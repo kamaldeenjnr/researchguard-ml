@@ -8,11 +8,28 @@
 ResearchGuard checks whether a model was tested in a way that matches how the data were
 collected, and estimates how much a mismatch changes the reported score.
 
-The usual workflow shuffles rows and runs k-fold cross-validation. That is fine when rows are
-independent. When the same patient, clinic or time period contributes several rows, a shuffled
-split can put some of them in training and the rest in testing, and the model is then partly
-tested on people it has already seen. ResearchGuard asks you to declare that structure, builds
-splits that respect it, checks the folds, and reports the score both ways.
+## In plain words
+
+Think of a prediction model as a student and testing as an exam. If the exam reuses questions
+the student already practised, a high score does not show the student can handle new questions.
+
+Health data has the same trap. One patient often has several hospital visits. The usual method
+shuffles all visits and splits them into a *training* set (practice) and a *test* set (the
+exam). Some of a patient's visits can land in practice and another in the exam, so the model is
+partly tested on someone it has already seen. Its score can then look better than it would be
+for new patients.
+
+ResearchGuard keeps all of a patient's visits on the same side, either all in practice or all
+in the exam, checks that every split really does this, and reports the score both ways. If the
+two scores are close, the shortcut did no harm. If they differ, the difference shows how much
+the usual method overstated the result.
+
+| Term | Meaning |
+|---|---|
+| Training / test data | The rows a model learns from, and the rows held back to check it. |
+| Cross-validation (CV) | Repeating the train/test split several times (here, 5 "folds") so every row is tested once. |
+| AUC | How well the model ranks people who had the outcome above those who did not. 0.5 is a coin toss, 1.0 is perfect. |
+| Optimism | AUC with the usual random split minus AUC with patients kept together. Near 0 means no inflation. |
 
 <img src="docs/img/fig1_splits.svg" width="100%" alt="Fold assignments for 8 patients with 3 visits each. Under random 4-fold CV every patient has visits in both train and test in at least one fold; under patient-grouped CV no patient is split.">
 
@@ -34,6 +51,20 @@ predictive performance; it is not causal inference or clinical validation.
 | Reliability | `metrics.py`, `calibration.py`, `subgroup.py` | ROC and PR AUC, Brier score, log-loss, calibration error, subgroup results (subgroups under 30 rows marked unreliable) |
 | Optimism | `evaluate.compare_designs` | AUC under random CV minus AUC under the design-aware split |
 | Report | `reporting.py` | JSON and Markdown, with configuration, seed, data fingerprint and library versions |
+
+## A real run
+
+<img src="docs/img/app_setup.png" width="100%" alt="ResearchGuard web app with a CSV of 8,401 hospital visits loaded; the outcome is 30-day readmission and the group column is patient_nbr.">
+
+*ResearchGuard's web app with 8,401 real hospital visits from 6,000 patients, a random sample of
+the Diabetes 130-US dataset. The outcome is readmission within 30 days, and `patient_nbr` tells
+the tool which visits belong to the same person.*
+
+<img src="docs/img/app_results.png" width="100%" alt="Report section showing that ordinary random CV split 1,206 of 6,000 patients across train and test, with AUC changing by less than 0.01.">
+
+*Part of the report from that run. Every grouped fold passed its checks. An ordinary random split
+would have put 1,206 of the 6,000 patients on both sides, yet AUC changed by less than 0.01, so on
+this sample the shortcut did not inflate the score.*
 
 An example report on synthetic data (60 patients, 10 visits each) is in
 [`examples/output/report.md`](examples/output/report.md). In that run, random CV placed all 60

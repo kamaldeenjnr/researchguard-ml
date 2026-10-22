@@ -13,6 +13,7 @@
   8 codes) are no longer flagged as identifiers; a name match now also needs more than 30 levels.
 
 ### Added
+- Plain-language section in the README and real screenshots of the web app run on hospital data.
 - README figures made with matplotlib from the results files (`docs/img/make_figures.py`):
   fold assignments under random versus patient-grouped CV, and optimism by scenario and model.
 - First real-data benchmark: Diabetes 130-US hospitals (UCI 296, CC BY 4.0), grouped by
@@ -40,6 +41,8 @@
 - `CITATION.cff`, project metadata, literature references in `docs/methodology.md`.
 
 ### Changed
+- Report warnings are written as sentences (e.g. "Missing values: `race` (161)") instead of raw
+  dictionaries.
 - Quartile subgroups are listed from lowest to highest instead of in text order.
 - A declared group/time column is no longer flagged as a possible identifier in the audit.
 - Fold checks in the Markdown report are written as a sentence rather than a raw dictionary.

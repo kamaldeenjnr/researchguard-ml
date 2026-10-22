@@ -53,6 +53,41 @@ def build_report(df, target, group_col=None, time_col=None, subgroup_cols=None,
     }
 
 
+_WARNING_TEXT = {
+    "MISSING_VALUES": "Missing values",
+    "DUPLICATE_ROWS": "Duplicate rows",
+    "CONSTANT_COLUMNS": "Columns with a single value (carry no information)",
+    "IDENTIFIER_COLUMNS": "Columns that look like identifiers",
+    "TARGET_MISSING": "Outcome is missing for some rows",
+    "TARGET_NOT_BINARY": "Outcome does not have exactly two values",
+    "CLASS_IMBALANCE": "Outcome is rare",
+    "SMALL_MINORITY_CLASS": "Few rows in the rarer outcome class",
+    "POSSIBLE_LEAKAGE": "Single columns that predict the outcome almost perfectly",
+    "UNCONFIRMED_GROUP_RISK": "Columns that may identify repeated people or sites",
+    "UNCONFIRMED_TIME_RISK": "Columns that may record time",
+    "N_SPLITS_REDUCED": "Number of folds reduced",
+}
+
+
+def _describe(details) -> str:
+    if not isinstance(details, dict):
+        return str(details)
+    if set(details) == {"columns"}:
+        return ", ".join(f"`{c}`" for c in details["columns"])
+    if set(details) == {"count"}:
+        return f"{details['count']:,} rows"
+    if all(isinstance(v, (int, float)) for v in details.values()):
+        fmt = lambda v: f"{v:,}" if isinstance(v, int) else f"{v:.3g}"  # noqa: E731
+        return ", ".join(f"`{k}` ({fmt(v)})" for k, v in details.items())
+    return ", ".join(f"{k}: {v}" for k, v in details.items())
+
+
+def _warning_line(w: dict) -> str:
+    label = _WARNING_TEXT.get(w["code"], w["code"])
+    tail = " *Needs your confirmation.*" if w.get("needs_user_confirmation") else ""
+    return f"- **{label}** ({w['code']}, {w['severity']}): {_describe(w['details'])}.{tail}"
+
+
 def _naive_sentence(nv: dict) -> str:
     parts = []
     if nv.get("n_groups"):
@@ -77,13 +112,10 @@ def to_markdown(r: dict) -> str:
          f"{a['n_columns']} columns · seed {r['config']['seed']} · "
          f"positive class `{r['evaluation']['positive_class']}`", "",
          "## Data warnings", ""]
-    L += [f"- **{w['code']}** ({w['severity']})"
-          + (" — needs confirmation" if w.get("needs_user_confirmation") else "")
-          + f": `{w['details']}`" for w in a["warnings"]] or ["- none detected"]
+    L += [_warning_line(w) for w in a["warnings"]] or ["- none detected"]
     L += ["", "## Validation design", "", f"Strategy: `{v['strategy']}`", ""]
     L += [f"- {x}" for x in v["reasons"]]
-    L += [f"- **{w['code']}**: `{w['details']}`" + (" — needs confirmation"
-          if w.get("needs_user_confirmation") else "") for w in v["warnings"]]
+    L += [_warning_line(w) for w in v["warnings"]]
     k = v["checks"]
     L += ["", f"Fold checks: **{'passed' if k['passed'] else 'FAILED'}** across {k['n_folds']} folds — "
           f"groups shared between train and test: {k['group_overlap']}; "
