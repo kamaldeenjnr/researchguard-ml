@@ -72,3 +72,25 @@ def test_positive_class_can_be_chosen():
     assert abs(a - b) < 1e-3  # AUC barely changes when the label is flipped
     with pytest.raises(ValueError, match="positive_class"):
         evaluate_models(df, "outcome", plan, positive_class="unknown")
+
+
+def test_pandas_nullable_dtypes_are_handled():
+    """Real files often load as Int64 / string / boolean columns with pd.NA."""
+    df = make_grouped_data(seed=2, leaky=False)
+    df["count"] = pd.array([None if i % 7 == 0 else i % 5 for i in range(len(df))], dtype="Int64")
+    df["code"] = pd.array([None if i % 9 == 0 else f"c{i % 4}" for i in range(len(df))],
+                          dtype="string")
+    df["flag"] = pd.array([None if i % 11 == 0 else bool(i % 2) for i in range(len(df))],
+                          dtype="boolean")
+    plan = select_validation(df, "outcome", n_splits=3)
+    res = evaluate_models(df, "outcome", plan, drop_columns=["group_id"])
+    assert set(res["models"]) == {"logistic_regression", "random_forest", "gradient_boosting"}
+
+
+def test_many_category_levels_do_not_break_gradient_boosting():
+    """Hundreds of codes (e.g. diagnoses) make one-hot output sparse; HGB needs dense."""
+    df = make_grouped_data(seed=4, leaky=False)
+    df["diagnosis"] = [f"d{(i * 37) % 400}" for i in range(len(df))]
+    plan = select_validation(df, "outcome", n_splits=3)
+    res = evaluate_models(df, "outcome", plan, drop_columns=["group_id"])
+    assert res["models"]["gradient_boosting"]["summary"]["roc_auc"]["mean"] is not None

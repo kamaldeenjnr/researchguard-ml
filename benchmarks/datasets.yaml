@@ -1,3 +1,17 @@
-# Real-data benchmark registry (empty by design until sources are verified).
-# Each entry needs: name, source_url, licence, target, group_col/time_col (with justification).
-datasets: []
+# Real-data benchmark registry. Data files are not stored in this repository.
+# Each entry: name, source_url, licence, target, group_col/time_col (with justification).
+datasets:
+  - name: diabetes130_us_hospitals
+    source_url: https://archive.ics.uci.edu/dataset/296/diabetes-130-us-hospitals-for-years-1999-2008
+    licence: CC BY 4.0
+    citation: >-
+      Strack, B., et al. (2014). Impact of HbA1c measurement on hospital readmission rates:
+      analysis of 70,000 clinical database patient records. BioMed Research International.
+    target: "readmitted == '<30' (30-day readmission) vs '>30' or 'NO'"
+    group_col: patient_nbr
+    group_justification: >-
+      One row per hospital encounter; 16,773 patients have more than one encounter, so a
+      random split can place the same patient in training and test data.
+    exclusions: discharge_disposition_id in {11, 13, 14, 19, 20, 21} (death or hospice)
+    script: benchmarks/real/diabetes130.py
+    results: benchmarks/results/real_diabetes130.md

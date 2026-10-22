@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.2 — 2026-10-22
+
+### Fixed (both found by running on real hospital data)
+- Columns with pandas nullable types (`Int64`, `boolean`, `string` with `pd.NA`) crashed the
+  imputers. They are now converted to plain float/object columns before modelling.
+- With many category levels (e.g. hundreds of diagnosis codes) the one-hot output became sparse
+  and `HistGradientBoostingClassifier` rejected it. Gradient boosting now uses a dense ordinal
+  encoding; logistic regression and random forest keep one-hot encoding.
+
+### Added
+- First real-data benchmark: Diabetes 130-US hospitals (UCI 296, CC BY 4.0), grouped by
+  patient (`benchmarks/real/diabetes130.py`, registered in `benchmarks/datasets.yaml`).
+
 ## 0.1.1 — 2026-10-22
 
 ### Fixed

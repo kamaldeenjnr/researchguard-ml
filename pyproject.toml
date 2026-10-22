@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "researchguard-ml"
-version = "0.1.1"
+version = "0.1.2"
 description = "Design-aware, auditable machine-learning evaluation for tabular research data"
 readme = "README.md"
 license = {text = "MIT"}

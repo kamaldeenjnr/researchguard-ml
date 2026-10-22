@@ -32,8 +32,21 @@ def _prepare(df, target, group_col, time_col, drop_columns, positive_class=None)
     if not features:
         raise ValueError("No feature columns remain after exclusions.")
     work = df.copy()
+    for c in features:
+        work[c] = _plain(work[c])
     work[target] = y
     return work, features, classes
+
+
+def _plain(col: pd.Series) -> pd.Series:
+    """Convert pandas nullable dtypes (Int64, boolean, string with pd.NA) to plain
+    float/object columns with np.nan, which scikit-learn's imputers understand."""
+    if not isinstance(col.dtype, pd.api.extensions.ExtensionDtype) or isinstance(
+            col.dtype, pd.CategoricalDtype):
+        return col
+    if pd.api.types.is_numeric_dtype(col) or pd.api.types.is_bool_dtype(col):
+        return col.astype("float64")
+    return col.astype(object).where(col.notna(), np.nan)
 
 
 def evaluate_models(df, target, plan: ValidationPlan, subgroup_cols=None,

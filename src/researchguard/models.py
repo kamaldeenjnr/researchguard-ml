@@ -20,7 +20,7 @@ def get_models(X: pd.DataFrame, seed: int = 42) -> dict[str, Pipeline]:
             ("model", RandomForestClassifier(n_estimators=200, random_state=seed, n_jobs=-1)),
         ]),
         "gradient_boosting": Pipeline([
-            ("prep", build_preprocessor(X, scale=False)),
+            ("prep", build_preprocessor(X, scale=False, encoding="ordinal")),
             ("model", HistGradientBoostingClassifier(random_state=seed)),
         ]),
     }
