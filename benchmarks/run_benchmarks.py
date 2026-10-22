@@ -9,7 +9,11 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import platform
+
+import numpy as np
 import pandas as pd
+import sklearn
 
 from researchguard.evaluate import compare_designs
 from researchguard.synthetic import make_grouped_data, make_temporal_data
@@ -43,7 +47,12 @@ def main():
     lines = [f"# Synthetic benchmark ({args.seeds} seeds per scenario)", "",
              "optimism = random-CV AUC − design-aware-CV AUC. Data are synthetic and built to "
              "contain (or lack) a known hazard; results show the mechanism, not real-world "
-             "prevalence.", "", summ.reset_index().to_markdown(index=False), ""]
+             "prevalence.", "",
+             f"Environment: Python {platform.python_version()}, scikit-learn {sklearn.__version__}, "
+             f"pandas {pd.__version__}, numpy {np.__version__}. Logistic regression and random "
+             "forest results are identical across recent scikit-learn versions; gradient boosting "
+             "(HistGradientBoostingClassifier) can differ by about 0.01–0.03 AUC between versions.",
+             "", summ.reset_index().to_markdown(index=False), ""]
     (out / "summary.md").write_text("\n".join(lines), encoding="utf-8")
     print("\n".join(lines))
 

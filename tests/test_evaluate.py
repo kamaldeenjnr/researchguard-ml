@@ -1,3 +1,4 @@
+import pytest
 import pandas as pd
 
 from researchguard.evaluate import compare_designs, evaluate_models
@@ -55,3 +56,19 @@ def test_string_labels_and_categoricals_work():
     plan = select_validation(df, "outcome")
     res = evaluate_models(df, "outcome", plan)
     assert res["positive_class"] == "yes"
+
+
+def test_positive_class_can_be_chosen():
+    from researchguard.validation import select_validation
+    df = make_grouped_data(seed=1, leaky=False)
+    df["outcome"] = df["outcome"].map({0: "survived", 1: "died"})
+    plan = select_validation(df, "outcome", n_splits=3)
+    default = evaluate_models(df, "outcome", plan, drop_columns=["group_id"])
+    chosen = evaluate_models(df, "outcome", plan, drop_columns=["group_id"], positive_class="died")
+    assert default["positive_class"] == "survived"  # alphabetical default
+    assert chosen["positive_class"] == "died"
+    a = default["models"]["logistic_regression"]["summary"]["roc_auc"]["mean"]
+    b = chosen["models"]["logistic_regression"]["summary"]["roc_auc"]["mean"]
+    assert abs(a - b) < 1e-3  # AUC barely changes when the label is flipped
+    with pytest.raises(ValueError, match="positive_class"):
+        evaluate_models(df, "outcome", plan, positive_class="unknown")

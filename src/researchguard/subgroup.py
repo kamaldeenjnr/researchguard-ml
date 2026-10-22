@@ -16,13 +16,20 @@ def subgroup_metrics(values: pd.Series, y, p, min_n: int = 30, max_levels: int =
     y = np.asarray(y)
     p = np.asarray(p)
     binned = False
+    order = None
     if pd.api.types.is_numeric_dtype(values) and values.nunique() > max_levels:
-        values = pd.qcut(values, 4, duplicates="drop").astype(str)
+        cut = pd.qcut(values, 4, duplicates="drop")
+        order = [str(c) for c in cut.cat.categories]  # lowest quartile first
+        values = cut.astype(str).where(cut.notna(), "missing")
         binned = True
-    values = values.astype(str).where(values.notna(), "missing")
+    else:
+        values = values.astype(str).where(values.notna(), "missing")
+    levels = sorted(values.unique())
+    if order is not None:
+        levels = [lv for lv in order if lv in set(levels)] + [lv for lv in levels if lv not in order]
 
     rows = []
-    for level in sorted(values.unique()):
+    for level in levels:
         m = (values == level).to_numpy()
         r = compute_metrics(y[m], p[m])
         r["level"] = level

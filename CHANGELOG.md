@@ -1,0 +1,30 @@
+# Changelog
+
+## 0.1.1 — 2026-10-22
+
+### Fixed
+- **Forward-in-time validation could split a single time point across train and test.**
+  When several rows shared a timestamp (same day, same visit), the row-based split could put
+  some of them in training and the rest in testing, and `verify_plan` still reported the plan
+  as passed because it checked `train_max > test_min` instead of `>=`. Splits are now made on
+  distinct time points, the check uses `>=`, and both behaviours are covered by tests.
+- Too few distinct time points for the requested folds now raises a clear error.
+
+### Added
+- `positive_class` option (Python, CLI `--positive-class`, web app) so the event of interest is
+  stated rather than inferred from alphabetical order. The chosen class is recorded in the report.
+- `verify_plan` reports `distinct_groups_shared` and `n_groups`; the report now says
+  "X of N groups had rows in both a training and a test fold" instead of a summed count.
+- Committed example report (`examples/output/report.md`) so readers can see the output
+  without installing anything.
+- `CITATION.cff`, project metadata, literature references in `docs/methodology.md`.
+
+### Changed
+- Quartile subgroups are listed from lowest to highest instead of in text order.
+- A declared group/time column is no longer flagged as a possible identifier in the audit.
+- Fold checks in the Markdown report are written as a sentence rather than a raw dictionary.
+
+## 0.1.0 — 2026-10-19
+- Initial release: data audit, design-aware validation selection and verification,
+  leakage-safe baselines, calibration and subgroup reliability, optimism estimate,
+  JSON/Markdown reports, synthetic benchmark.

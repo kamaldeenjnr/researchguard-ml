@@ -27,9 +27,9 @@ def _data_hash(df: pd.DataFrame) -> str:
 
 
 def build_report(df, target, group_col=None, time_col=None, subgroup_cols=None,
-                 drop_columns=None, n_splits=5, seed=42) -> dict:
+                 drop_columns=None, n_splits=5, seed=42, positive_class=None) -> dict:
     drop_columns = list(drop_columns or [])
-    audit = audit_dataset(df, target)
+    audit = audit_dataset(df, target, declared_columns=[c for c in (group_col, time_col) if c])
     plan = select_validation(df, target, group_col, time_col, n_splits, seed)
     return {
         "researchguard_version": __version__,
@@ -38,16 +38,32 @@ def build_report(df, target, group_col=None, time_col=None, subgroup_cols=None,
                         "pandas": pd.__version__, "numpy": np.__version__},
         "config": {"target": target, "group_col": group_col, "time_col": time_col,
                    "subgroup_cols": subgroup_cols or [], "drop_columns": drop_columns,
-                   "n_splits": plan.n_splits, "seed": seed},
+                   "n_splits": plan.n_splits, "seed": seed,
+                   "positive_class": None if positive_class is None else str(positive_class)},
         "data_fingerprint": _data_hash(df),
         "audit": audit,
         "validation": {"strategy": plan.strategy, "reasons": plan.reasons,
                        "warnings": plan.warnings, "checks": verify_plan(df, target, plan)},
-        "evaluation": evaluate_models(df, target, plan, subgroup_cols, drop_columns, seed),
+        "evaluation": evaluate_models(df, target, plan, subgroup_cols, drop_columns, seed,
+                                      positive_class=positive_class),
         "design_comparison": compare_designs(df, target, group_col, time_col,
-                                             drop_columns, n_splits, seed),
+                                             drop_columns, n_splits, seed,
+                                             positive_class=positive_class),
         "disclaimer": DISCLAIMER,
     }
+
+
+def _naive_sentence(nv: dict) -> str:
+    parts = []
+    if nv.get("n_groups"):
+        parts.append(f"{nv['distinct_groups_shared']} of {nv['n_groups']} groups had rows in both "
+                     "a training and a test fold")
+    if nv.get("time_order_violations"):
+        parts.append(f"{nv['time_order_violations']} fold(s) trained on data from the same time "
+                     "or later than the test data")
+    if not parts:
+        return "Ordinary random CV did not mix the declared structure across train and test."
+    return "Under ordinary random CV, " + " and ".join(parts) + "."
 
 
 def _f(x, nd=3):
@@ -58,7 +74,8 @@ def to_markdown(r: dict) -> str:
     a, v, e, c = r["audit"], r["validation"], r["evaluation"], r["design_comparison"]
     L = ["# ResearchGuard ML report", "",
          f"Data fingerprint `{r['data_fingerprint']}` · {a['n_rows']} rows · "
-         f"{a['n_columns']} columns · seed {r['config']['seed']}", "",
+         f"{a['n_columns']} columns · seed {r['config']['seed']} · "
+         f"positive class `{r['evaluation']['positive_class']}`", "",
          "## Data warnings", ""]
     L += [f"- **{w['code']}** ({w['severity']})"
           + (" — needs confirmation" if w.get("needs_user_confirmation") else "")
@@ -67,7 +84,13 @@ def to_markdown(r: dict) -> str:
     L += [f"- {x}" for x in v["reasons"]]
     L += [f"- **{w['code']}**: `{w['details']}`" + (" — needs confirmation"
           if w.get("needs_user_confirmation") else "") for w in v["warnings"]]
-    L += ["", f"Fold checks: `{v['checks']}`", "", "## Model performance (mean ± sd over folds)", "",
+    k = v["checks"]
+    L += ["", f"Fold checks: **{'passed' if k['passed'] else 'FAILED'}** across {k['n_folds']} folds — "
+          f"groups shared between train and test: {k['group_overlap']}; "
+          f"time-order violations: {k['time_order_violations']}; "
+          f"test rows duplicated in train: {k['test_rows_duplicated_in_train']}; "
+          f"folds missing a class: {k['folds_missing_a_class']}.",
+          "", "## Model performance (mean ± sd over folds)", "",
           "| Model | ROC AUC | PR AUC | Brier | ECE |", "|---|---|---|---|---|"]
     for n, m in e["models"].items():
         s = m["summary"]
@@ -76,8 +99,7 @@ def to_markdown(r: dict) -> str:
                  f"{_f(m['calibration']['ece'])} |")
     if c.get("applicable"):
         L += ["", "## Conventional vs design-aware validation", "",
-              f"Random CV placed the same group/time structure across train and test: "
-              f"`{c['naive_plan_violations']}`", "",
+              _naive_sentence(c["naive_plan_violations"]), "",
               "| Model | Random-CV AUC | Design-aware AUC | Optimism |", "|---|---|---|---|"]
         for n, m in c["models"].items():
             L.append(f"| {n} | {_f(m['naive_auc'])} | {_f(m['design_aware_auc'])} | "

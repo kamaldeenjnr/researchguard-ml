@@ -17,11 +17,13 @@ def _warn(code: str, severity: str, details: dict, needs_confirmation: bool = Fa
     }
 
 
-def audit_dataset(df: pd.DataFrame, target: str | None = None) -> dict:
+def audit_dataset(df: pd.DataFrame, target: str | None = None,
+                  declared_columns: list[str] | None = None) -> dict:
     """Return basic, transparent dataset-quality checks.
 
     Detects observable problems only. It cannot prove the absence of
-    leakage, bias or measurement error.
+    leakage, bias or measurement error. ``declared_columns`` (e.g. the group or
+    time column the user has already declared) are not flagged as identifiers.
     """
     if not isinstance(df, pd.DataFrame):
         raise TypeError("df must be a pandas DataFrame.")
@@ -49,7 +51,7 @@ def audit_dataset(df: pd.DataFrame, target: str | None = None) -> dict:
 
     id_like = [
         str(c) for c in df.columns
-        if c != target and (
+        if c != target and c not in (declared_columns or []) and (
             ID_NAME.search(str(c))
             or (df[c].nunique() == len(df) and not pd.api.types.is_float_dtype(df[c]))
         )

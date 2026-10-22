@@ -17,6 +17,9 @@ if file:
     st.dataframe(df.head(20))
     cols = list(df.columns)
     target = st.selectbox("Binary outcome column", cols)
+    levels = sorted(df[target].dropna().astype(str).unique())
+    positive = st.selectbox("Which outcome value counts as positive (the event)?", levels,
+                            index=len(levels) - 1 if levels else 0)
     group = st.selectbox("Group column (repeated participants / sites), if any", [None] + cols)
     time = st.selectbox("Time column, if outcomes are time-ordered", [None] + cols)
     sub = st.multiselect("Subgroup columns to evaluate", cols)
@@ -25,7 +28,8 @@ if file:
     if st.button("Run evaluation"):
         try:
             with st.spinner("Running..."):
-                rep = build_report(df, target, group, time, sub, drop, splits)
+                rep = build_report(df, target, group, time, sub, drop, splits,
+                                   positive_class=positive)
             st.markdown(to_markdown(rep))
             st.download_button("Download JSON report", json.dumps(rep, indent=2, default=str),
                                "report.json")

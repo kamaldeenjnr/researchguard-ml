@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use ResearchGuard ML, please cite it as below."
+title: "ResearchGuard ML: design-aware, auditable machine-learning evaluation for tabular research data"
+type: software
+authors:
+  - family-names: Kamal
+    given-names: Amadu
+    email: amadukamal8@gmail.com
+version: 0.1.1
+date-released: 2026-10-22
+license: MIT
+repository-code: "https://github.com/kamaldeenjnr/researchguard-ml"
+keywords:
+  - machine learning
+  - cross-validation
+  - data leakage
+  - reproducibility

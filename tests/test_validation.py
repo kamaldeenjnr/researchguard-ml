@@ -67,3 +67,43 @@ def test_rejects_bad_inputs():
         select_validation(df, "y", group_col="nope")
     with pytest.raises(NotImplementedError):
         select_validation(df, "y", group_col="patient_id", time_col="visit_date")
+
+
+def _same_day_df(seed=0):
+    """43 days with 7 rows each: row-based splits would cut through days."""
+    rng = np.random.default_rng(seed)
+    return pd.DataFrame({"day": np.repeat(np.arange(43), 7),
+                         "x": rng.normal(size=301),
+                         "y": rng.integers(0, 2, 301)})
+
+
+def test_time_split_keeps_each_time_point_on_one_side():
+    df = _same_day_df()
+    plan = select_validation(df, "y", time_col="day", n_splits=5)
+    for tr, te in plan.split(df, "y"):
+        assert not set(df.loc[tr, "day"]) & set(df.loc[te, "day"])
+        assert df.loc[tr, "day"].max() < df.loc[te, "day"].min()
+    assert verify_plan(df, "y", plan)["passed"]
+
+
+def test_verify_flags_shared_time_points():
+    """A plan that puts the same day in train and test must not pass."""
+    df = _same_day_df()
+    plan = select_validation(df, "y", time_col="day", n_splits=5)
+
+    def row_split(d, target):  # the old, row-based behaviour
+        from sklearn.model_selection import TimeSeriesSplit
+        order = np.argsort(d["day"].to_numpy(), kind="stable")
+        for tr, te in TimeSeriesSplit(5).split(order):
+            yield order[tr], order[te]
+
+    plan.split = row_split
+    checks = verify_plan(df, "y", plan)
+    assert checks["time_order_violations"] > 0
+    assert not checks["passed"]
+
+
+def test_too_few_time_points_rejected():
+    df = _same_day_df().assign(day=lambda d: d["day"] % 3)
+    with pytest.raises(ValueError, match="distinct values"):
+        select_validation(df, "y", time_col="day", n_splits=5)

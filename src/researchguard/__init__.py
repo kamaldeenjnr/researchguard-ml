@@ -1,5 +1,5 @@
 """ResearchGuard ML: auditable machine-learning evaluation for tabular research data."""
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from .audit import audit_dataset
 from .evaluate import compare_designs, evaluate_models

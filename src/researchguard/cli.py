@@ -23,6 +23,8 @@ def main(argv=None) -> int:
     r.add_argument("--drop", action="append", default=[], help="Column to exclude from features")
     r.add_argument("--n-splits", type=int, default=5)
     r.add_argument("--seed", type=int, default=42)
+    r.add_argument("--positive-class", help="Outcome value to treat as positive (default: "
+                   "second value in sorted order, e.g. 1 or 'yes')")
     r.add_argument("--out", default="researchguard_report")
     args = p.parse_args(argv)
 
@@ -31,7 +33,7 @@ def main(argv=None) -> int:
         print(json.dumps(audit_dataset(df, args.target), indent=2, default=str))
         return 0
     report = build_report(df, args.target, args.group_col, args.time_col, args.subgroup,
-                          args.drop, args.n_splits, args.seed)
+                          args.drop, args.n_splits, args.seed, args.positive_class)
     jp, mp = write_report(report, args.out)
     print(f"Wrote {jp} and {mp}")
     return 0

@@ -10,3 +10,7 @@
 - Benchmarks so far are synthetic by construction.
 - Output describes predictive association, not causation, and is not clinical validation.
 - Uncertainty is reported as fold SD, not a confidence interval.
+- In temporal comparisons, forward-in-time folds also train on less data (an expanding window)
+  than random CV, so part of the measured optimism can come from training-set size rather than
+  leakage or drift. The stable-relationship control in the benchmark estimates this effect
+  (about 0.00–0.01 AUC on the synthetic data), but it is not separated out on real data.

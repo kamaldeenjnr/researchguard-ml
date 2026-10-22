@@ -47,9 +47,13 @@ class ValidationPlan:
                 self.n_splits, shuffle=True, random_state=self.seed
             ).split(X, y, df[self.group_col].to_numpy())
         elif self.strategy == "time_series_split":
-            order = np.argsort(df[self.time_col].to_numpy(), kind="stable")
-            for tr, te in TimeSeriesSplit(self.n_splits).split(X):
-                yield order[tr], order[te]
+            # Split on distinct time points, not rows: rows that share a timestamp
+            # (same day, same visit) must land on the same side of the split.
+            t = df[self.time_col].to_numpy()
+            points = np.unique(t)
+            for tr_p, te_p in TimeSeriesSplit(self.n_splits).split(points.reshape(-1, 1)):
+                yield (np.flatnonzero(np.isin(t, points[tr_p])),
+                       np.flatnonzero(np.isin(t, points[te_p])))
         else:
             raise ValueError(f"Unknown strategy: {self.strategy}")
 
@@ -108,6 +112,11 @@ def select_validation(
         strategy = "stratified_group_kfold"
         reasons.append(f"Rows share '{group_col}', so whole groups are held out together.")
     elif time_col:
+        n_points = int(df[time_col].nunique())
+        if n_points < n_splits + 1:
+            raise ValueError(
+                f"Only {n_points} distinct values in '{time_col}'; forward-in-time "
+                f"validation with n_splits={n_splits} needs at least {n_splits + 1}.")
         strategy = "time_series_split"
         reasons.append(f"'{time_col}' declared: models are always tested on later data.")
     else:
@@ -138,12 +147,16 @@ def verify_plan(df: pd.DataFrame, target: str, plan: ValidationPlan) -> dict:
 
     group_overlap = time_violations = dup_leak = folds_missing_class = 0
     n_folds = 0
+    shared_groups: set = set()
     for tr, te in plan.split(df, target):
         n_folds += 1
         if plan.group_col:
-            group_overlap += len(set(df.loc[tr, plan.group_col]) & set(df.loc[te, plan.group_col]))
+            both = set(df.loc[tr, plan.group_col]) & set(df.loc[te, plan.group_col])
+            group_overlap += len(both)
+            shared_groups |= both
         if plan.time_col:
-            if df.loc[tr, plan.time_col].max() > df.loc[te, plan.time_col].min():
+            # >= : a time point present in both train and test is also a violation.
+            if df.loc[tr, plan.time_col].max() >= df.loc[te, plan.time_col].min():
                 time_violations += 1
         dup_leak += int(np.isin(hashes[te], hashes[tr]).sum())
         if df.loc[te, target].nunique() < 2 or df.loc[tr, target].nunique() < 2:
@@ -151,7 +164,9 @@ def verify_plan(df: pd.DataFrame, target: str, plan: ValidationPlan) -> dict:
 
     return {
         "n_folds": n_folds,
-        "group_overlap": group_overlap,
+        "group_overlap": group_overlap,  # summed over folds
+        "distinct_groups_shared": len(shared_groups),
+        "n_groups": int(df[plan.group_col].nunique()) if plan.group_col else None,
         "time_order_violations": time_violations,
         "test_rows_duplicated_in_train": dup_leak,
         "folds_missing_a_class": folds_missing_class,

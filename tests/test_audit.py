@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -40,3 +41,27 @@ def test_flags_possible_leakage_for_confirmation():
     r = audit_dataset(df, target="y")
     w = next(w for w in r["warnings"] if w["code"] == "POSSIBLE_LEAKAGE")
     assert "leak" in w["details"] and w["needs_user_confirmation"]
+
+
+def _clean(n=400, seed=0):
+    rng = np.random.default_rng(seed)
+    x = rng.normal(size=n)
+    y = rng.binomial(1, 1 / (1 + np.exp(-1.5 * x)))
+    return pd.DataFrame({"age": rng.normal(40, 10, n).round(1), "x": x, "y": y})
+
+
+def test_clean_data_raises_no_warnings():
+    assert audit_dataset(_clean(), target="y")["warnings"] == []
+
+
+def test_strong_but_plausible_predictor_not_flagged_as_leakage():
+    codes = [w["code"] for w in audit_dataset(_clean(), target="y")["warnings"]]
+    assert "POSSIBLE_LEAKAGE" not in codes  # AUC around 0.8 is a real signal, not leakage
+
+
+def test_declared_group_column_not_flagged_as_identifier():
+    df = _clean().assign(patient_id=np.repeat(np.arange(100), 4))
+    flagged = audit_dataset(df, target="y")
+    declared = audit_dataset(df, target="y", declared_columns=["patient_id"])
+    assert "IDENTIFIER_COLUMNS" in [w["code"] for w in flagged["warnings"]]
+    assert "IDENTIFIER_COLUMNS" not in [w["code"] for w in declared["warnings"]]

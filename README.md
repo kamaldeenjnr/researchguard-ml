@@ -1,6 +1,15 @@
 # ResearchGuard ML
 
+[![tests](https://github.com/kamaldeenjnr/researchguard-ml/actions/workflows/tests.yml/badge.svg)](https://github.com/kamaldeenjnr/researchguard-ml/actions/workflows/tests.yml)
+![python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-0C203B)
+[![license](https://img.shields.io/badge/license-MIT-0C203B)](LICENSE)
+![status](https://img.shields.io/badge/status-v0.1.1%20alpha-C4412B)
+
 **Auditable machine-learning evaluation for tabular research data.**
+
+**In one sentence:** before you trust a model's accuracy, ResearchGuard checks whether the
+way it was tested matches the way your data were collected, and shows how much the usual
+shortcut would have flattered the result.
 
 Most quick ML projects report a cross-validated score and stop. ResearchGuard asks a prior
 question: *is that evaluation design appropriate for how the data were collected?* If the same
@@ -22,6 +31,21 @@ not generalisation.
 | Optimism estimate | `evaluate.compare_designs` | how much random CV overstates AUC compared with the design-aware split |
 | Reproducible report | `reporting.py` | JSON + Markdown with config, seed, data fingerprint, library versions |
 
+## What a report looks like
+
+From [`examples/output/report.md`](examples/output/report.md) (synthetic data, 60 patients × 10 visits):
+
+> Under ordinary random CV, **60 of 60 groups had rows in both a training and a test fold.**
+>
+> | Model | Random-CV AUC | Design-aware AUC | Optimism |
+> |---|---|---|---|
+> | logistic_regression | 0.655 | 0.644 | 0.011 |
+> | random_forest | 0.727 | 0.624 | **0.103** |
+> | gradient_boosting | 0.713 | 0.619 | **0.093** |
+
+Read: with the same patients on both sides of the split, the random forest looked 0.10 AUC
+better than it really is on new patients.
+
 ## Install and run
 
 ```bash
@@ -37,14 +61,16 @@ CLI:
 
 ```bash
 researchguard audit data.csv --target outcome
-researchguard run data.csv --target outcome --group-col patient_id --subgroup sex --out report/
+researchguard run data.csv --target outcome --positive-class yes \
+    --group-col patient_id --subgroup sex --out report/
 ```
 
 Python:
 
 ```python
 from researchguard import build_report, to_markdown
-report = build_report(df, target="outcome", group_col="patient_id", subgroup_cols=["sex"])
+report = build_report(df, target="outcome", positive_class="yes",
+                      group_col="patient_id", subgroup_cols=["sex"])
 print(to_markdown(report))
 ```
 
@@ -59,7 +85,7 @@ Web app: `pip install -e ".[app]" && streamlit run app/streamlit_app.py`
 | Scenario | Random forest | Gradient boosting | Logistic regression |
 |---|---|---|---|
 | Grouped data with group-recognisable features | **+0.18** | **+0.17** | +0.03 |
-| Grouped control (no hazard) | −0.00 | −0.00 | +0.00 |
+| Grouped control (no hazard) | −0.00 | +0.00 | +0.00 |
 | Temporal concept drift | **+0.12** | **+0.13** | +0.07 |
 | Temporal control (stable relationship) | +0.01 | −0.00 | +0.00 |
 
@@ -70,7 +96,25 @@ Web app: `pip install -e ".[app]" && streamlit run app/streamlit_app.py`
 - Real-data benchmarks (e.g. OpenML datasets with known grouping) are the next required step
   and are not done yet. See [`docs/benchmark_protocol.md`](docs/benchmark_protocol.md).
 
-Reproduce: `python benchmarks/run_benchmarks.py --seeds 10` (requires `pip install tabulate`).
+Reproduce: `python benchmarks/run_benchmarks.py --seeds 10`.
+
+## Why you can check it rather than trust it
+
+- **Checks are tested both ways:** firing on a known problem, and staying quiet on clean data
+  (false alarms matter as much as misses). The suite runs on Python 3.10–3.12 on every push.
+- **Controls in the benchmark:** scenarios with no hazard should show ~0 optimism, and do.
+- **Reproducible reports:** each report records the seed, data fingerprint, configuration and
+  library versions.
+- **Folds are verified, not assumed:** `verify_plan` re-checks every split for shared groups,
+  time-order violations, duplicated rows and missing classes.
+- **Honest scope:** see the limitations below and the [changelog](CHANGELOG.md), which lists the
+  bugs found and fixed.
+
+The underlying problem is well documented: record-wise splits of repeated-measures data inflate
+accuracy ([Saeb et al., 2017](https://doi.org/10.1093/gigascience/gix019)), structured data need
+blocked cross-validation ([Roberts et al., 2017](https://doi.org/10.1111/ecog.02881)), and leakage
+is a leading cause of irreproducible ML-based science
+([Kapoor & Narayanan, 2023](https://doi.org/10.1016/j.patter.2023.100804)).
 
 ## Limitations
 
@@ -83,6 +127,11 @@ group + time validation together is not yet supported; no causal claims; no clin
 Issues and PRs welcome, especially real-data benchmark cases (with licence-compatible data),
 new leakage checks with tests, and methodology critique. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
+## Citing
+
+If ResearchGuard helps your work, please cite it using [`CITATION.cff`](CITATION.cff)
+(GitHub shows a "Cite this repository" button).
+
 ## License
 
-MIT
+MIT · built by [Amadu Kamal](https://modelanalysishub.com)
