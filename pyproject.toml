@@ -30,6 +30,7 @@ Changelog = "https://github.com/kamaldeenjnr/researchguard-ml/blob/main/CHANGELO
 [project.optional-dependencies]
 dev = ["pytest", "tabulate"]
 app = ["streamlit"]
+figures = ["matplotlib"]
 
 [project.scripts]
 researchguard = "researchguard.cli:main"

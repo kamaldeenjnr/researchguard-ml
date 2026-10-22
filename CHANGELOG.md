@@ -13,8 +13,8 @@
   8 codes) are no longer flagged as identifiers; a name match now also needs more than 30 levels.
 
 ### Added
-- README figures (light and dark): how a random split mixes patients, and how much it inflated
-  AUC across every benchmark scenario. Built from the results files by `docs/img/make_figures.py`.
+- README figures made with matplotlib from the results files (`docs/img/make_figures.py`):
+  fold assignments under random versus patient-grouped CV, and optimism by scenario and model.
 - First real-data benchmark: Diabetes 130-US hospitals (UCI 296, CC BY 4.0), grouped by
   patient (`benchmarks/real/diabetes130.py`, registered in `benchmarks/datasets.yaml`).
   Result: about 20% of patients were shared across random-CV splits, but optimism was at most

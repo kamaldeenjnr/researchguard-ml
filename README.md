@@ -3,53 +3,42 @@
 [![tests](https://github.com/kamaldeenjnr/researchguard-ml/actions/workflows/tests.yml/badge.svg)](https://github.com/kamaldeenjnr/researchguard-ml/actions/workflows/tests.yml)
 ![python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-0C203B)
 [![license](https://img.shields.io/badge/license-MIT-0C203B)](LICENSE)
-![status](https://img.shields.io/badge/status-v0.1.1%20alpha-C4412B)
+![status](https://img.shields.io/badge/status-v0.1.2%20alpha-C4412B)
 
-**Auditable machine-learning evaluation for tabular research data.**
+ResearchGuard checks whether a model was tested in a way that matches how the data were
+collected, and estimates how much a mismatch changes the reported score.
 
-**In one sentence:** before you trust a model's accuracy, ResearchGuard checks whether the
-way it was tested matches the way your data were collected, and shows how much the usual
-shortcut would have flattered the result.
+The usual workflow shuffles rows and runs k-fold cross-validation. That is fine when rows are
+independent. When the same patient, clinic or time period contributes several rows, a shuffled
+split can put some of them in training and the rest in testing, and the model is then partly
+tested on people it has already seen. ResearchGuard asks you to declare that structure, builds
+splits that respect it, checks the folds, and reports the score both ways.
 
-Most quick ML projects report a cross-validated score and stop. ResearchGuard asks a prior
-question: *is that evaluation design appropriate for how the data were collected?* If the same
-patient, hospital or time period appears on both sides of a split, the score measures recall,
-not generalisation.
+<img src="docs/img/fig1_splits.svg" width="100%" alt="Fold assignments for 8 patients with 3 visits each. Under random 4-fold CV every patient has visits in both train and test in at least one fold; under patient-grouped CV no patient is split.">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/img/split-dark.svg">
-  <img src="docs/img/split-light.svg" width="100%" alt="Random split versus patient-grouped split: in a random split, visits from 5 of 8 patients land in both training and test data; in a grouped split each patient is on one side only.">
-</picture>
+*Figure 1. Which visits are held out in each fold, for 8 patients with 3 visits each (dark = test).
+Red lines mark a patient whose visits fall on both sides of that fold. Splits produced by
+scikit-learn's `KFold` and `GroupKFold`.*
 
-> **Status: v0.1, early research software.** Binary classification on tabular data only.
-> Predictive association only: not causal inference, not clinical validation.
+Status: v0.1.2, early research software. Binary outcomes and tabular data only. It describes
+predictive performance; it is not causal inference or clinical validation.
 
 ## What it does
 
 | Step | Module | Output |
 |---|---|---|
-| Data audit | `audit.py` | missing values, duplicates, constants, identifier-like columns, class imbalance, single-feature leakage suspects |
-| Validation design | `validation.py` | stratified / group-aware / forward-in-time splits chosen from the study design **you declare**; undeclared suspected structure is warned about, never silently assumed |
-| Fold verification | `verify_plan` | group overlap, time-order violations, duplicate rows across train/test, folds missing a class |
-| Leakage-safe modelling | `preprocessing.py`, `models.py` | logistic regression, random forest, gradient boosting; all preprocessing fitted inside each training fold |
-| Reliability | `metrics.py`, `calibration.py`, `subgroup.py` | ROC/PR AUC, Brier, log-loss, ECE, per-subgroup metrics (small subgroups flagged unreliable) |
-| Optimism estimate | `evaluate.compare_designs` | how much random CV overstates AUC compared with the design-aware split |
-| Reproducible report | `reporting.py` | JSON + Markdown with config, seed, data fingerprint, library versions |
+| Data audit | `audit.py` | missing values, duplicates, constant columns, identifier-like columns, class imbalance, single features that separate the outcome almost perfectly |
+| Validation design | `validation.py` | stratified, grouped or forward-in-time folds, chosen from the structure you declare. Structure that is only suspected from column names produces a warning; it is never assumed |
+| Fold checks | `verify_plan` | groups shared across train and test, time-order violations, duplicated rows, folds missing a class |
+| Modelling | `preprocessing.py`, `models.py` | logistic regression, random forest, gradient boosting; imputation, scaling and encoding fitted inside each training fold |
+| Reliability | `metrics.py`, `calibration.py`, `subgroup.py` | ROC and PR AUC, Brier score, log-loss, calibration error, subgroup results (subgroups under 30 rows marked unreliable) |
+| Optimism | `evaluate.compare_designs` | AUC under random CV minus AUC under the design-aware split |
+| Report | `reporting.py` | JSON and Markdown, with configuration, seed, data fingerprint and library versions |
 
-## What a report looks like
-
-From [`examples/output/report.md`](examples/output/report.md) (synthetic data, 60 patients × 10 visits):
-
-> Under ordinary random CV, **60 of 60 groups had rows in both a training and a test fold.**
->
-> | Model | Random-CV AUC | Design-aware AUC | Optimism |
-> |---|---|---|---|
-> | logistic_regression | 0.655 | 0.644 | 0.011 |
-> | random_forest | 0.727 | 0.624 | **0.103** |
-> | gradient_boosting | 0.713 | 0.619 | **0.093** |
-
-Read: with the same patients on both sides of the split, the random forest looked 0.10 AUC
-better than it really is on new patients.
+An example report on synthetic data (60 patients, 10 visits each) is in
+[`examples/output/report.md`](examples/output/report.md). In that run, random CV placed all 60
+patients on both sides of the split, and the random forest's AUC fell from 0.727 to 0.624 once
+patients were held out together.
 
 ## Install and run
 
@@ -62,7 +51,7 @@ pytest -q
 python examples/binary_classification.py
 ```
 
-CLI:
+Command line:
 
 ```bash
 researchguard audit data.csv --target outcome
@@ -79,89 +68,78 @@ report = build_report(df, target="outcome", positive_class="yes",
 print(to_markdown(report))
 ```
 
-Web app: `pip install -e ".[app]" && streamlit run app/streamlit_app.py`
-(do not upload identifiable patient data).
+There is also a small web app: `pip install -e ".[app]" && streamlit run app/streamlit_app.py`.
+Do not upload identifiable patient data to it.
 
-## Evidence so far
+## Results so far
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/img/optimism-dark.svg">
-  <img src="docs/img/optimism-light.svg" width="100%" alt="Optimism of random cross-validation by scenario and model: up to +0.18 AUC on synthetic data with recognisable patients, about +0.13 with changing patterns, near zero on controls and on 99,343 real hospital visits.">
-</picture>
+<img src="docs/img/fig2_optimism.svg" width="100%" alt="Optimism by scenario and model. Up to about 0.18 AUC on synthetic data where patients are recognisable and about 0.13 under drift; close to zero for the controls and for the real hospital data.">
 
-<sub>Figures are generated from the committed results by <a href="docs/img/make_figures.py"><code>docs/img/make_figures.py</code></a>.</sub>
+*Figure 2. Optimism (random-CV AUC minus design-aware AUC) by scenario and model. Markers are
+means and lines are the range across seeds. Synthetic scenarios are built to contain or lack a
+known problem; the bottom row is real hospital data.*
 
-### Real data: 99,343 hospital encounters (Diabetes 130-US hospitals)
+**Real data.** The Diabetes 130-US hospitals dataset has 99,343 encounters (after removing
+deaths and hospice discharges) from 69,990 patients; 16,341 patients have more than one
+encounter. The outcome is readmission within 30 days. Over 5 seeds of 5-fold CV:
 
-30-day readmission, grouped by patient; 16,341 patients have repeat encounters. 5 seeds × 5 folds
-([full results](benchmarks/results/real_diabetes130.md), [script](benchmarks/real/diabetes130.py)).
-
-| Model | Random-CV AUC | Patient-grouped AUC | Optimism (mean, range) |
+| Model | Random-CV AUC | Patient-grouped AUC | Optimism, mean (range) |
 |---|---|---|---|
-| Logistic regression | 0.656 | 0.655 | +0.000 (−0.001 to +0.003) |
-| Random forest | 0.659 | 0.657 | +0.003 (−0.001 to +0.005) |
-| Gradient boosting | 0.672 | 0.672 | −0.000 (−0.002 to +0.001) |
+| Logistic regression | 0.656 | 0.655 | 0.000 (−0.001 to 0.003) |
+| Random forest | 0.659 | 0.657 | 0.003 (−0.001 to 0.005) |
+| Gradient boosting | 0.672 | 0.672 | 0.000 (−0.002 to 0.001) |
 
-Random CV placed about 20% of patients on both sides of every split, yet scores barely changed.
-**ResearchGuard flagged the structure without exaggerating its effect:** here, shared patients
-did not inflate performance. Running it on real data also exposed three bugs, all fixed (see the
-[changelog](CHANGELOG.md)).
+Random CV put about 20% of patients on both sides of the split in every seed, but the scores
+hardly moved. With these features and models, repeat patients did not make the task easier.
+That is a useful finding in itself: shared patients only inflate a score when a model can
+recognise them, and that has to be measured for each dataset rather than assumed. Details are in
+[`benchmarks/results/real_diabetes130.md`](benchmarks/results/real_diabetes130.md) and the script
+is [`benchmarks/real/diabetes130.py`](benchmarks/real/diabetes130.py). Running on this dataset
+also turned up three bugs, listed in the [changelog](CHANGELOG.md).
 
-### Synthetic benchmark (10 seeds)
-
-`optimism = AUC under random CV − AUC under design-aware CV`. Mean over 10 seeds
-(full table, SD and ranges: [`benchmarks/results/summary.md`](benchmarks/results/summary.md)).
+**Synthetic data.** Four scenarios, 10 seeds each
+([full table](benchmarks/results/summary.md)):
 
 | Scenario | Random forest | Gradient boosting | Logistic regression |
 |---|---|---|---|
-| Grouped data with group-recognisable features | **+0.18** | **+0.17** | +0.03 |
-| Grouped control (no hazard) | −0.00 | +0.00 | +0.00 |
-| Temporal concept drift | **+0.12** | **+0.13** | +0.07 |
-| Temporal control (stable relationship) | +0.01 | −0.00 | +0.00 |
+| Grouped, patients recognisable from their features | +0.18 | +0.17 | +0.03 |
+| Grouped, no hazard (control) | −0.00 | +0.00 | +0.00 |
+| Relationship drifts over time | +0.12 | +0.13 | +0.07 |
+| Stable over time (control) | +0.01 | −0.00 | +0.00 |
 
-**How to read this honestly:**
-- The datasets are *constructed* to contain the hazard. This shows the mechanism and that the
-  controls do not false-alarm. It does **not** show how common the problem is in real research data.
-- Flexible models (forests, boosting) exploit the hazard far more than logistic regression.
-- One real-data benchmark is done (above); more datasets, including temporal ones, are needed.
-  See [`docs/benchmark_protocol.md`](docs/benchmark_protocol.md).
+These datasets were built to contain the problem, so they show the mechanism and that the
+controls stay near zero. They say nothing about how common the problem is. Forests and boosting
+pick up group signatures much more than logistic regression does. Reproduce with
+`python benchmarks/run_benchmarks.py --seeds 10`; the figures are rebuilt with
+`python docs/img/make_figures.py`.
 
-Reproduce: `python benchmarks/run_benchmarks.py --seeds 10`.
+## Testing and reproducibility
 
-## Why you can check it rather than trust it
+Each check is tested on data where it should fire and on clean data where it should stay quiet.
+The test suite runs on Python 3.10, 3.11 and 3.12 on every push. Reports record the seed, a
+fingerprint of the data, the configuration and library versions, and `verify_plan` re-checks
+every fold rather than trusting the splitter.
 
-- **Checks are tested both ways:** firing on a known problem, and staying quiet on clean data
-  (false alarms matter as much as misses). The suite runs on Python 3.10–3.12 on every push.
-- **Controls in the benchmark:** scenarios with no hazard should show ~0 optimism, and do.
-- **Reproducible reports:** each report records the seed, data fingerprint, configuration and
-  library versions.
-- **Folds are verified, not assumed:** `verify_plan` re-checks every split for shared groups,
-  time-order violations, duplicated rows and missing classes.
-- **Honest scope:** see the limitations below and the [changelog](CHANGELOG.md), which lists the
-  bugs found and fixed.
-
-The underlying problem is well documented: record-wise splits of repeated-measures data inflate
-accuracy ([Saeb et al., 2017](https://doi.org/10.1093/gigascience/gix019)), structured data need
-blocked cross-validation ([Roberts et al., 2017](https://doi.org/10.1111/ecog.02881)), and leakage
-is a leading cause of irreproducible ML-based science
+The problem itself is well described in the literature: record-wise splits of repeated-measures
+data overstate accuracy ([Saeb et al., 2017](https://doi.org/10.1093/gigascience/gix019)),
+structured data need blocked cross-validation
+([Roberts et al., 2017](https://doi.org/10.1111/ecog.02881)), and leakage is a common cause of
+irreproducible results in ML-based science
 ([Kapoor & Narayanan, 2023](https://doi.org/10.1016/j.patter.2023.100804)).
 
 ## Limitations
 
-See [`docs/limitations.md`](docs/limitations.md). In short: leakage cannot be reliably detected
-from column names and structure alone, so those findings are labelled *needs confirmation*;
-group + time validation together is not yet supported; no causal claims; no clinical use.
+Leakage cannot be detected reliably from column names and structure alone, so those findings
+are marked "needs confirmation". Group and time structure cannot yet be combined in one design,
+and models use default hyperparameters. More real datasets, especially time-ordered ones, are
+needed. Full list: [`docs/limitations.md`](docs/limitations.md).
 
 ## Contributing
 
-Issues and PRs welcome, especially real-data benchmark cases (with licence-compatible data),
-new leakage checks with tests, and methodology critique. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Real-data benchmark cases (with licence-compatible data), new checks with tests, and criticism
+of the method are all welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-## Citing
+## Citing and licence
 
-If ResearchGuard helps your work, please cite it using [`CITATION.cff`](CITATION.cff)
-(GitHub shows a "Cite this repository" button).
-
-## License
-
-MIT · built by [Amadu Kamal](https://modelanalysishub.com)
+Citation details are in [`CITATION.cff`](CITATION.cff). MIT licence.
+Written by [Amadu Kamal](https://modelanalysishub.com).
