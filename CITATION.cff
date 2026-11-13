@@ -3,8 +3,8 @@ message: "If you use ResearchGuard ML, please cite it as below."
 title: "ResearchGuard ML: design-aware, auditable machine-learning evaluation for tabular research data"
 type: software
 authors:
-  - family-names: Kamal
-    given-names: Amadu
+  - family-names: Amadu
+    given-names: Kamal
     email: amadukamal8@gmail.com
 version: 0.1.2
 date-released: 2026-10-22

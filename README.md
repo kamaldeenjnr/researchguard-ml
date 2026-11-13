@@ -195,4 +195,4 @@ of the method are all welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 ## Citing and licence
 
 Citation details are in [`CITATION.cff`](CITATION.cff). MIT licence.
-Written by [Amadu Kamal](https://modelanalysishub.com).
+Written by [Kamal Amadu](https://modelanalysishub.com).
